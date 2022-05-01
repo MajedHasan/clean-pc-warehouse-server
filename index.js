@@ -40,7 +40,8 @@ async function run() {
         app.post('/inventory', async (req, res) => {
             const newInventory = req.body
             const result = await inventoryCollection.insertOne(newInventory)
-            res.end(result)
+            console.log(result);
+            res.send(result)
         })
 
     }
