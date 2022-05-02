@@ -12,6 +12,23 @@ app.use(cors())
 app.use(express.json())
 
 
+// Verify JWT
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization
+    if (!authHeader) {
+        return res.status(401).send({ message: 'unauthorized access' })
+    }
+    const token = authHeader.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden Access' })
+        }
+        req.decoded = decoded
+        next()
+    })
+}
+
+
 
 // MongoDB
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.amk0y.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
@@ -30,6 +47,20 @@ async function run() {
             res.send({ accessToken })
         })
 
+        app.get('/myitem', verifyJWT, async (req, res) => {
+            const decodedEmail = req.decoded.email
+            if (decodedEmail) {
+                const email = req.query.email
+                const query = { email }
+                const cursor = inventoryCollection.find(query)
+                const myItem = await cursor.toArray()
+                res.send(myItem)
+            }
+            else {
+                res.status(403).send({ message: 'Forbidden Access' })
+            }
+        })
+
         app.get('/inventory', async (req, res) => {
             const query = {}
             const cursor = inventoryCollection.find(query)
@@ -41,6 +72,9 @@ async function run() {
             const newInventory = req.body
             const result = await inventoryCollection.insertOne(newInventory)
             console.log(result);
+            if (!result) {
+                return res.send("Sorry something went wrong to adding New Item. Please try again later")
+            }
             res.send(result)
         })
 
