@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require("dotenv").config();
 const app = express()
 const jwt = require('jsonwebtoken')
@@ -59,6 +59,13 @@ async function run() {
             else {
                 res.status(403).send({ message: 'Forbidden Access' })
             }
+        })
+
+        app.delete('/deleteitem/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = inventoryCollection.deleteOne(query)
+            res.send(result)
         })
 
         app.get('/inventory', async (req, res) => {
